@@ -33,13 +33,28 @@ func (c *Compiler) Compile(node ast.Node) error {
 				return err
 			}
 		}
+
 	case *ast.ExpressionStatement:
 		err := c.Compile(node.Expression)
 		if err != nil {
 			return err
 		}
 		c.Emit(code.OpPop)
+
 	case *ast.InfixExpression:
+		if node.Operator == "<" {
+			err := c.Compile(node.Right)
+			if err != nil {
+				return err
+			}
+			err = c.Compile(node.Left)
+			if err != nil {
+				return err
+			}
+			c.Emit(code.OpGreaterThan)
+			return nil
+		}
+
 		err := c.Compile(node.Left)
 		if err != nil {
 			return err
@@ -59,6 +74,12 @@ func (c *Compiler) Compile(node ast.Node) error {
 			c.Emit(code.OpMul)
 		case "/":
 			c.Emit(code.OpDiv)
+		case ">":
+			c.Emit(code.OpGreaterThan)
+		case "==":
+			c.Emit(code.OpEqual)
+		case "!=":
+			c.Emit(code.OpNotEqual)
 		default:
 			return fmt.Errorf("unknown operator %s", node.Operator)
 		}
@@ -66,6 +87,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 	case *ast.IntegerLiteral:
 		integer := &object.Integer{Value: node.Value}
 		c.Emit(code.OpConstant, c.AddConstant(integer))
+
+	case *ast.Boolean:
+		if node.Value {
+			c.Emit(code.OpTrue)
+		} else {
+			c.Emit(code.OpFalse)
+		}
 
 	}
 	return nil
