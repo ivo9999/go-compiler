@@ -25,6 +25,14 @@ jobs:
         working-directory: ./src
         run: go mod tidy
 
-      - name: Run tests
+      - name: Test code
         working-directory: ./src
-        run: go test -v ./...
+        run: go test -v ./code
+
+      - name: Test vm
+        working-directory: ./src
+        run: go test -v ./vm
+
+      - name: Test compiler
+        working-directory: ./src
+        run: go test -v ./compiler

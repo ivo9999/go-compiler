@@ -8,6 +8,7 @@ import (
 )
 
 type Compiler struct {
+	symbolTable  *SymbolTable
 	instructions code.Instructions
 	constants    []object.Object
 
@@ -28,6 +29,7 @@ type EmittedInstruction struct {
 func New() *Compiler {
 	return &Compiler{
 		instructions:        code.Instructions{},
+		symbolTable:         NewSymbolTable(),
 		constants:           []object.Object{},
 		lastInstruction:     EmittedInstruction{},
 		previousInstruction: EmittedInstruction{},
@@ -118,6 +120,21 @@ func (c *Compiler) Compile(node ast.Node) error {
 		} else {
 			c.Emit(code.OpFalse)
 		}
+
+	case *ast.LetStatement:
+		err := c.Compile(node.Value)
+		if err != nil {
+			return err
+		}
+		symbol := c.symbolTable.Define(node.Name.Value)
+		c.Emit(code.OpSetGlobal, symbol.Index)
+
+	case *ast.Identifier:
+		symbol, ok := c.symbolTable.Resolve(node.Value)
+		if !ok {
+			return fmt.Errorf("undefined variable %s", node.Value)
+		}
+		c.Emit(code.OpGetGlobal, symbol.Index)
 
 	case *ast.IfExpression:
 		err := c.Compile(node.Condition)
