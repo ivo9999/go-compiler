@@ -184,6 +184,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 	return nil
 }
 
+func NewWithState(s *SymbolTable, c []object.Object) *Compiler {
+	compiler := New()
+	compiler.symbolTable = s
+	compiler.constants = c
+	return compiler
+}
+
 func (c *Compiler) Bytecode() *Bytecode {
 	return &Bytecode{
 		Instructions: c.instructions,
